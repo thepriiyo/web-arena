@@ -1,13 +1,12 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>JRPG Arena</title>
-    <!-- We link a sexy RPG font from Google Fonts -->
+    <title>JRPG Arena (Elite Edition)</title>
     <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@700&family=Play&display=swap" rel="stylesheet">
     <style>
         body {
-            /* Background Image */
-            background-image: url('{{ url_for("static", filename="images/bg.png") }}');
+            /* Now using highly compressed WebP! */
+            background-image: url('{{ url_for("static", filename="images/bg.webp") }}');
             background-size: cover;
             background-position: center;
             background-repeat: no-repeat;
@@ -33,7 +32,6 @@
             margin-bottom: 20px;
         }
 
-        /* Glassmorphism Container */
         .container {
             width: 800px;
             background: rgba(20, 20, 25, 0.7);
@@ -47,7 +45,6 @@
             gap: 20px;
         }
 
-        /* Portraits & Stats Area */
         .battlefield {
             display: flex;
             justify-content: space-between;
@@ -69,7 +66,6 @@
             border: 3px solid #b8b8b8;
             box-shadow: 0 0 15px rgba(0,0,0,0.8);
             object-fit: cover;
-            /* Subtle breathing animation */
             animation: breathe 3s ease-in-out infinite alternate;
         }
 
@@ -85,7 +81,6 @@
             text-shadow: 1px 1px 5px #000;
         }
 
-        /* Animated Health Bars */
         .hp-bar-container {
             width: 100%;
             height: 20px;
@@ -100,7 +95,6 @@
         .hp-bar {
             height: 100%;
             background: linear-gradient(90deg, #ff4757, #ff6b81);
-            /* Smoothly animates when the width changes! */
             transition: width 0.5s ease-out;
         }
 
@@ -117,7 +111,6 @@
             justify-content: space-between;
         }
 
-        /* The Battle Log */
         .logs {
             flex-grow: 1;
             text-align: left;
@@ -135,14 +128,12 @@
             margin: 5px 0;
             color: #d1d8e0;
         }
-        /* Highlight the newest log entry */
         .log-entry:first-child {
             color: #fff;
             font-weight: bold;
             text-shadow: 0 0 5px rgba(255,255,255,0.5);
         }
 
-        /* Controls Area */
         .controls {
             display: flex;
             flex-direction: column;
@@ -177,12 +168,12 @@
             box-shadow: none;
         }
 
-        button[value="attack"] {
+        .btn-attack {
             border-color: #ff4757;
             color: #ff6b81;
         }
 
-        button[value="heal"] {
+        .btn-heal {
             border-color: #1e90ff;
             color: #70a1ff;
         }
@@ -192,6 +183,7 @@
             color: #ffd32a;
             font-family: 'Cinzel', serif;
             text-shadow: 0 0 10px span;
+            margin-bottom: 10px;
         }
     </style>
 </head>
@@ -199,60 +191,97 @@
     <h1>The Monster Arena</h1>
     <div class="container">
         
-        <!-- UI Panels -->
         <div class="battlefield">
             
             <div class="fighter">
-                <img src="{{ url_for('static', filename='images/hero.png') }}" class="portrait" alt="Hero">
+                <img src="{{ url_for('static', filename='images/hero.webp') }}" class="portrait" alt="Hero">
                 <div class="name">{{ player.name }}</div>
                 
                 <div class="hp-bar-container">
-                    <!-- Jinja math to calculate percentage! -->
-                    <div class="hp-bar" style="width: {{ (player.hp / 100.0) * 100 }}%;"></div>
+                    <div id="player-hp-bar" class="hp-bar" style="width: {{ (player.hp / 100.0) * 100 }}%;"></div>
                 </div>
-                <div style="margin-top: 5px;">{{ player.hp }} / 100</div>
+                <div style="margin-top: 5px;"><span id="player-hp-text">{{ player.hp }}</span> / 100</div>
 
-                <div class="potions">🧪 Potions: {{ player.potions }}</div>
+                <div id="player-potions" class="potions">🧪 Potions: {{ player.potions }}</div>
             </div>
 
             <h2 style="font-family: 'Cinzel', serif; font-size: 3rem; color: #ffeb3b; text-shadow: 0 0 10px #ff0;">VS</h2>
 
             <div class="fighter">
-                <img src="{{ url_for('static', filename='images/dragon.png') }}" class="portrait" alt="Dragon" style="border-color: #ff4757;">
+                <img src="{{ url_for('static', filename='images/dragon.webp') }}" class="portrait" alt="Dragon" style="border-color: #ff4757;">
                 <div class="name" style="color: #ff4757;">{{ dragon.name }}</div>
                 
                 <div class="hp-bar-container">
-                    <!-- Dragon has 150 max HP -->
-                    <div class="hp-bar" style="width: {{ (dragon.hp / 150.0) * 100 }}%;"></div>
+                    <div id="dragon-hp-bar" class="hp-bar" style="width: {{ (dragon.hp / 150.0) * 100 }}%;"></div>
                 </div>
-                <div style="margin-top: 5px;">{{ dragon.hp }} / 150</div>
+                <div style="margin-top: 5px;"><span id="dragon-hp-text">{{ dragon.hp }}</span> / 150</div>
             </div>
 
         </div>
 
         <div class="logs-and-controls">
-            <!-- Action Logs -->
-            <div class="logs">
+            <div id="action-logs" class="logs">
                 {% for log in logs %}
                     <div class="log-entry">{{ log }}</div>
                 {% endfor %}
             </div>
 
-            <!-- Controls -->
-            <div class="controls">
+            <!-- Controls (Now Javascript Powered) -->
+            <div id="controls-container" class="controls">
                 {% if game_over %}
+                    <div class="game-over">BATTLE OVER</div>
                     <form action="/" method="GET" style="display: flex; flex-direction: column;">
                         <button type="submit" style="color: #2ed573; border-color: #2ed573;">Play Again</button>
                     </form>
                 {% else %}
-                    <form action="/play" method="POST" style="display: flex; flex-direction: column; gap: 15px;">
-                        <button type="submit" name="action" value="attack">🗡️ Attack</button>
-                        <button type="submit" name="action" value="heal">🧪 Heal</button>
-                    </form>
+                    <button class="btn-attack" onclick="doAction('attack')">🗡️ Attack</button>
+                    <button class="btn-heal" onclick="doAction('heal')">🧪 Heal</button>
                 {% endif %}
             </div>
         </div>
 
     </div>
+
+    <script>
+        async function doAction(actionName) {
+            // Send the request in the background
+            const response = await fetch("/api/play", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json"
+                },
+                body: JSON.stringify({ action: actionName })
+            });
+
+            const data = await response.json();
+
+            // 1. Smoothly update HP Widths & Numbers
+            document.getElementById("player-hp-text").innerText = Math.max(0, data.player_hp);
+            document.getElementById("player-hp-bar").style.width = (Math.max(0, data.player_hp) / 100.0) * 100 + "%";
+            document.getElementById("player-potions").innerText = "🧪 Potions: " + data.player_potions;
+            
+            document.getElementById("dragon-hp-text").innerText = Math.max(0, data.dragon_hp);
+            document.getElementById("dragon-hp-bar").style.width = (Math.max(0, data.dragon_hp) / 150.0) * 100 + "%";
+
+            // 2. Prepend Logs
+            const logsContainer = document.getElementById("action-logs");
+            data.new_logs.reverse().forEach(log => {
+                const logDiv = document.createElement("div");
+                logDiv.className = "log-entry";
+                logDiv.innerText = log;
+                logsContainer.prepend(logDiv);
+            });
+
+            // 3. Handle Game Over UI Swap
+            if (data.game_over) {
+                document.getElementById("controls-container").innerHTML = `
+                    <div class="game-over">BATTLE OVER</div>
+                    <form action="/" method="GET" style="display: flex; flex-direction: column;">
+                        <button type="submit" style="color: #2ed573; border-color: #2ed573;">Play Again</button>
+                    </form>
+                `;
+            }
+        }
+    </script>
 </body>
 </html>
