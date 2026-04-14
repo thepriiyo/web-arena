@@ -1,0 +1,13 @@
+{
+	"version": "2.0.0",
+	"tasks": [
+		{
+			"label": "Run Hello",
+			"type": "shell",
+			"command": "/usr/bin/python3",
+			"args": [
+				"hello.py"
+			]
+		}
+	]
+}
